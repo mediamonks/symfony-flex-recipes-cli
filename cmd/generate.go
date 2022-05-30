@@ -17,8 +17,14 @@ import (
 var generateCommand = &cobra.Command{
 	Use:     "generate",
 	Short:   "Generates the recipes index and manifests",
-	Example: "recipes generate",
+	Example: "recipes generate [output dir]",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		outputDir := "./"
+
+		if len(args) == 1 {
+			outputDir = args[0]
+		}
+
 		index := &recipe.Index{
 			Aliases:   map[string]string{},
 			Recipes:   make(map[string][]string),
@@ -62,7 +68,7 @@ var generateCommand = &cobra.Command{
 			// We don't want the aliases in the recipe manifest
 			manifest.Aliases = nil
 
-			if err := generatePackageJson(pkg, version, ref, manifest); err != nil {
+			if err := generatePackageJson(pkg, version, ref, manifest, outputDir); err != nil {
 				return err
 			}
 
@@ -79,7 +85,7 @@ var generateCommand = &cobra.Command{
 			return fmt.Errorf("unable to marshal index.json: %w", err)
 		}
 
-		if err := ioutil.WriteFile("index.json", indexJson, os.ModePerm); err != nil {
+		if err := ioutil.WriteFile(fmt.Sprintf("%s/index.json", outputDir), indexJson, os.ModePerm); err != nil {
 			return fmt.Errorf("unable to save index.json: %w", err)
 		}
 
@@ -87,7 +93,7 @@ var generateCommand = &cobra.Command{
 	},
 }
 
-func generatePackageJson(pkg string, version string, ref string, manifest *recipe.Manifest) error {
+func generatePackageJson(pkg string, version string, ref string, manifest *recipe.Manifest, outputDir string) error {
 	files := make(map[string]*recipe.File, 0)
 	err := filepath.Walk(fmt.Sprintf("%s/%s", pkg, version), func(path string, info fs.FileInfo, err error) error {
 		if info.IsDir() || info.Name() == "manifest.json" {
@@ -146,7 +152,7 @@ func generatePackageJson(pkg string, version string, ref string, manifest *recip
 
 	// Also create an archived recipe
 	packageNameDotted := strings.ReplaceAll(pkg, "/", ".")
-	archivePath := fmt.Sprintf("./archived/%s", packageNameDotted)
+	archivePath := fmt.Sprintf("%s/archived/%s", outputDir, packageNameDotted)
 
 	recipeBytes, err := json2.Marshal(rcpe)
 	if err != nil {
@@ -163,7 +169,7 @@ func generatePackageJson(pkg string, version string, ref string, manifest *recip
 		return fmt.Errorf("unable to write archive file: %s/%s.json: %w", archivePath, ref, err)
 	}
 
-	if err := ioutil.WriteFile(fmt.Sprintf("%s.%s.json", packageNameDotted, version), recipeBytes, os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(fmt.Sprintf("%s/%s.%s.json", outputDir, packageNameDotted, version), recipeBytes, os.ModePerm); err != nil {
 		return fmt.Errorf("unable to write recipe file: %.%s.json: %w", packageNameDotted, version, err)
 	}
 
