@@ -13,8 +13,6 @@ builds:
       - linux
     goarch:
       - amd64
-    ldflags:
-      - "{{ .Env.LDFLAGS }}"
     no_unique_dist_dir: true
 
   - id: darwin-amd64
@@ -24,8 +22,6 @@ builds:
       - darwin
     goarch:
       - amd64
-    ldflags:
-      - "{{ .Env.LDFLAGS }}"
     no_unique_dist_dir: true
 
   - id: windows-amd64
@@ -37,7 +33,6 @@ builds:
       - amd64
     ldflags:
       - -buildmode=exe
-      - "{{ .Env.LDFLAGS }}"
     no_unique_dist_dir: true
 
 archives:
