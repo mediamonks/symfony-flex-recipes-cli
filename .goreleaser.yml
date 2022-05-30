@@ -1,0 +1,60 @@
+project_name: recipes
+
+before:
+  hooks:
+    - go mod tidy
+    - go mod download
+
+builds:
+  - id: linux-amd64
+    binary: recipes-linux-{{ .Arch }}
+    main: ./cli.go
+    goos:
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - "{{ .Env.LDFLAGS }}"
+    no_unique_dist_dir: true
+
+  - id: darwin-amd64
+    binary: recipes-darwin-{{ .Arch }}
+    main: ./cli.go
+    goos:
+      - darwin
+    goarch:
+      - amd64
+    ldflags:
+      - "{{ .Env.LDFLAGS }}"
+    no_unique_dist_dir: true
+
+  - id: windows-amd64
+    binary: recipes-windows-{{ .Arch }}
+    main: ./cli.go
+    goos:
+      - windows
+    goarch:
+      - amd64
+    ldflags:
+      - -buildmode=exe
+      - "{{ .Env.LDFLAGS }}"
+    no_unique_dist_dir: true
+
+archives:
+  - format: tar.gz
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+    format_overrides:
+      - goos: windows
+        format: zip
+    name_template: '{{.ProjectName}}_{{.Version}}_{{.Os}}-{{.Arch}}'
+
+checksum:
+  name_template: '{{.ProjectName}}_checksums.txt'
+
+snapshot:
+  name_template: 'SNAPSHOT-{{.ShortCommit}}'
